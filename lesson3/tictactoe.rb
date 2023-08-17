@@ -11,8 +11,53 @@ def prompt(msg)
   puts "=> #{msg}"
 end
 
+def print_welcome_message
+  prompt "First one to win 5 matches wins the game!"
+  prompt "Would you like to choose who goes first? (y or n)?"
+end
+
+def determine_who_starts(answer)
+  first_player = ''
+  if answer.downcase.start_with?('y')
+    loop do
+      prompt "Who would you like to go first, player (p) or computer (c)?"
+      first_player = gets.chomp.downcase
+      break if first_player.start_with?('p') || first_player.start_with?('c')
+      prompt "That entry is invalid. Type 'p' for player or 'c' for computer."
+    end
+  else
+    first_player = ['computer', 'player'].sample
+  end
+  first_player
+end
+
 # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-def display_board(brd, score1, score2)
+def prompt_who_starts(first_player)
+  if first_player == 'player'
+    prompt "Okay, you will go first."
+  else
+    prompt "Okay, the computer will go first."
+  end
+  prompt "Here are the corresponding squares. Press Enter to start!"
+  puts ""
+  puts "     |     |"
+  puts "  1  |  2  |  3"
+  puts "     |     |"
+  puts "-----+-----+-----"
+  puts "     |     |"
+  puts "  4  |  5  |  6"
+  puts "     |     |"
+  puts "-----+-----+-----"
+  puts "     |     |"
+  puts "  7  |  8  |  9"
+  puts "     |     |"
+  puts ""
+  gets.chomp
+end
+# rubocop:enable Metrics/MethodLength, Metrics/AbcSize
+
+# rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+def display_board(board, score1, score2)
   system 'clear'
   puts <<-TEXT
   You're #{PLAYER_MARKER}. Computer is #{COMPUTER_MARKER}.
@@ -21,15 +66,15 @@ def display_board(brd, score1, score2)
   TEXT
   puts ""
   puts "     |     |"
-  puts "  #{brd[1]}  |  #{brd[2]}  |  #{brd[3]}"
+  puts "  #{board[1]}  |  #{board[2]}  |  #{board[3]}"
   puts "     |     |"
   puts "-----+-----+-----"
   puts "     |     |"
-  puts "  #{brd[4]}  |  #{brd[5]}  |  #{brd[6]}"
+  puts "  #{board[4]}  |  #{board[5]}  |  #{board[6]}"
   puts "     |     |"
   puts "-----+-----+-----"
   puts "     |     |"
-  puts "  #{brd[7]}  |  #{brd[8]}  |  #{brd[9]}"
+  puts "  #{board[7]}  |  #{board[8]}  |  #{board[9]}"
   puts "     |     |"
   puts ""
 end
@@ -41,8 +86,8 @@ def initialize_board
   new_board
 end
 
-def empty_squares(brd)
-  brd.keys.select { |num| brd[num] == INITIAL_MARKER }
+def empty_squares(board)
+  board.keys.select { |num| board[num] == INITIAL_MARKER }
 end
 
 def joinor(arr, delimiter = ', ', end_separator = 'or')
@@ -55,11 +100,11 @@ def joinor(arr, delimiter = ', ', end_separator = 'or')
   end
 end
 
-def place_piece!(brd, current_player)
+def place_piece!(board, current_player)
   if current_player == 'player'
-    player_places_piece!(brd)
+    player_places_piece!(board)
   else
-    computer_places_piece!(brd)
+    computer_places_piece!(board)
   end
 end
 
@@ -67,71 +112,93 @@ def alternate_player(current_player)
   current_player == 'player' ? 'computer' : 'player'
 end
 
-def player_places_piece!(brd)
+def player_places_piece!(board)
   square = ''
   loop do
-    prompt "Choose a square: (#{joinor(empty_squares(brd))})"
+    prompt "Choose a square: (#{joinor(empty_squares(board))})"
     square = gets.chomp.to_i
-    break if empty_squares(brd).include?(square)
+    break if empty_squares(board).include?(square)
     prompt "Sorry, that's not a valid choice."
   end
-  brd[square] = PLAYER_MARKER
+  board[square] = PLAYER_MARKER
 end
 
-def find_at_risk_square(line, brd, marker)
-  if brd.values_at(*line).count(marker) == 2
-    brd.select { |k, v| line.include?(k) && v == INITIAL_MARKER }.keys.first
+def find_at_risk_square(line, board, marker)
+  if board.values_at(*line).count(marker) == 2
+    board.select { |k, v| line.include?(k) && v == INITIAL_MARKER }.keys.first
   end
 end
 
-def find_offensive_square(arr, brd)
+def find_offensive_square(arr, board)
   square = nil
   arr.each do |line|
-    square = find_at_risk_square(line, brd, COMPUTER_MARKER)
+    square = find_at_risk_square(line, board, COMPUTER_MARKER)
     break if square
   end
   square
 end
 
-def find_defensive_square(arr, brd)
+def find_defensive_square(arr, board)
   square = nil
   arr.each do |line|
-    square = find_at_risk_square(line, brd, PLAYER_MARKER)
+    square = find_at_risk_square(line, board, PLAYER_MARKER)
     break if square
   end
   square
 end
 
-def computer_places_piece!(brd)
-  square = find_offensive_square(WINNING_LINES, brd)
-  square = find_defensive_square(WINNING_LINES, brd) if !square
-  if !square && empty_squares(brd).include?(5)
-    brd[5] = COMPUTER_MARKER
+def computer_places_piece!(board)
+  square = find_offensive_square(WINNING_LINES, board)
+  square = find_defensive_square(WINNING_LINES, board) if !square
+  if !square && empty_squares(board).include?(5)
+    board[5] = COMPUTER_MARKER
   elsif !square
-    square = empty_squares(brd).sample
-    brd[square] = COMPUTER_MARKER
+    square = empty_squares(board).sample
+    board[square] = COMPUTER_MARKER
   else
-    brd[square] = COMPUTER_MARKER
+    board[square] = COMPUTER_MARKER
   end
 end
 
-def board_full?(brd)
-  empty_squares(brd).empty?
+def board_full?(board)
+  empty_squares(board).empty?
 end
 
-def someone_won?(brd)
-  !!detect_winner(brd)
+def someone_won?(board)
+  !!detect_winner(board)
 end
 
-def detect_winner(brd)
+def detect_winner(board)
   WINNING_LINES.each do |line|
-    if brd.values_at(*line).count(PLAYER_MARKER) == 3
-      return 'Player'
-    elsif brd.values_at(*line).count(COMPUTER_MARKER) == 3
+    if board.values_at(*line).count(PLAYER_MARKER) == 3
+      return 'You'
+    elsif board.values_at(*line).count(COMPUTER_MARKER) == 3
       return 'Computer'
     end
   end
   nil
+end
+
+def display_round_winner(board)
+  if someone_won?(board)
+    prompt "#{detect_winner(board)} won!"
+  else
+    prompt "It's a tie!"
+  end
+  prompt 'Press Enter to play the next match.'
+  gets.chomp
+end
+
+def display_game_winner(player_score, computer_score)
+  if player_score > computer_score
+    prompt 'Congratulations! You won the game!'
+  else
+    prompt 'Sorry, Computer won the game.'
+  end
+end
+
+def print_goodbye_message
+  prompt 'Thanks for playing Tic Tac Toe! Good bye!'
 end
 
 system 'clear'
@@ -141,27 +208,12 @@ loop do
   player_score = 0
   computer_score = 0
   board = ''
-  first_player = ''
 
-  prompt "First one to win 5 matches wins the game!"
-  prompt "Would you like to choose who goes first? (y or n)?"
+  print_welcome_message
   answer = gets.chomp
-
-  if answer.downcase.start_with?('y')
-    loop do
-      prompt "Who would you like to go first, player (p) or computer (c)?"
-      first_player = gets.chomp.downcase
-      break if first_player.start_with?('p') || first_player.start_with?('c')
-      prompt "That entry is invalid. Type 'p' for player or 'c' for computer."
-    end
-  else
-    first_player = ['computer', 'player'].sample
-  end
-
+  first_player = determine_who_starts(answer)
   first_player = first_player.start_with?('p') ? 'player' : 'computer'
-
-  prompt "Okay, the #{first_player} will go first. Press Enter to start!"
-  gets.chomp
+  prompt_who_starts(first_player)
 
   loop do
     board = initialize_board
@@ -176,33 +228,21 @@ loop do
 
     display_board(board, player_score, computer_score)
 
-    if detect_winner(board) == 'Player'
+    if detect_winner(board) == 'You'
       player_score += 1
     elsif detect_winner(board) == 'Computer'
       computer_score += 1
     end
 
-    break if player_score == 5 || computer_score == 5
+    break if player_score == 2 || computer_score == 2
 
-    if someone_won?(board)
-      prompt "#{detect_winner(board)} won!"
-    else
-      prompt "It's a tie!"
-    end
-
-    prompt 'Press Enter to play the next match.'
-    gets.chomp
+    display_round_winner(board)
 
     first_player = alternate_player(first_player)
   end
 
   display_board(board, player_score, computer_score)
-
-  if player_score > computer_score
-    prompt 'Congratulations! You won the game!'
-  else
-    prompt 'Sorry, Computer won the game.'
-  end
+  display_game_winner(player_score, computer_score)
 
   prompt 'Play again? (y or n)'
   answer = gets.chomp
@@ -210,4 +250,4 @@ loop do
   system 'clear'
 end
 
-prompt 'Thanks for playing Tic Tac Toe! Good bye!'
+print_goodbye_message
