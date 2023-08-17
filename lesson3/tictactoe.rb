@@ -179,6 +179,14 @@ def detect_winner(board)
   nil
 end
 
+def increase_score(board, scores)
+  if detect_winner(board) == 'You'
+    scores[:player_score] += 1
+  elsif detect_winner(board) == 'Computer'
+    scores[:computer_score] += 1
+  end
+end
+
 def display_round_winner(board)
   if someone_won?(board)
     prompt "#{detect_winner(board)} won!"
@@ -205,8 +213,7 @@ system 'clear'
 prompt "Welcome to Tic Tac Toe!"
 
 loop do
-  player_score = 0
-  computer_score = 0
+  scores = { player_score: 0, computer_score: 0 }
   board = ''
 
   print_welcome_message
@@ -220,29 +227,25 @@ loop do
     current_player = first_player
 
     loop do
-      display_board(board, player_score, computer_score)
+      display_board(board, scores[:player_score], scores[:computer_score])
       place_piece!(board, current_player)
       current_player = alternate_player(current_player)
       break if someone_won?(board) || board_full?(board)
     end
 
-    display_board(board, player_score, computer_score)
+    display_board(board, scores[:player_score], scores[:computer_score])
 
-    if detect_winner(board) == 'You'
-      player_score += 1
-    elsif detect_winner(board) == 'Computer'
-      computer_score += 1
-    end
+    increase_score(board, scores)
 
-    break if player_score == 2 || computer_score == 2
+    break if scores[:player_score] == 2 || scores[:computer_score] == 2
 
     display_round_winner(board)
 
     first_player = alternate_player(first_player)
   end
 
-  display_board(board, player_score, computer_score)
-  display_game_winner(player_score, computer_score)
+  display_board(board, scores[:player_score], scores[:computer_score])
+  display_game_winner(scores[:player_score], scores[:computer_score])
 
   prompt 'Play again? (y or n)'
   answer = gets.chomp
