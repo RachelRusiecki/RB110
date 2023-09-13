@@ -15,39 +15,28 @@ def display_welcome_message
 end
 
 def initialize_deck
-  VALUES.keys.product(SUITS).shuffle.map(&:join)
+  VALUES.keys.product(SUITS).shuffle
 end
 
 def deal_card(deck, hand)
+  deck = initialize_deck if deck.empty?
   current_card = deck.sample
   hand << current_card
   deck.delete(current_card)
 end
 
-def calculate_initial_total(real_totals, totals, hand, participant)
-  totals[participant] = VALUES[hand[0][0...-1]] + VALUES[hand[1][0...-1]]
-  real_totals[participant] = VALUES[hand[0][0...-1]] + VALUES[hand[1][0...-1]]
-  determine_ace_value(real_totals, totals, hand, participant)
+def calculate_total(totals, hand, participant)
+  totals[participant] = 0
+  hand.each { |card| totals[participant] += VALUES[card[0]] }
+  determine_ace_value(totals, hand, participant)
 end
 
-def calculate_player_total(real_totals, totals, current_card)
-  totals[:player] += VALUES[current_card[0...-1]]
-  real_totals[:player] += VALUES[current_card[0...-1]]
-end
-
-def calculate_dealer_total(real_totals, totals, current_card)
-  totals[:dealer] += VALUES[current_card[0...-1]]
-  real_totals[:dealer] += VALUES[current_card[0...-1]]
-end
-
-def determine_ace_value(real_totals, totals, hand, participant)
-  if busted?(real_totals, participant)
-    ace_count = hand.count { |card| card.start_with?('A') }
-    until totals[participant] <= BUST_LIMIT
-      if (ace_count * 10) <= (real_totals[participant] - totals[participant])
-        break
-      end
+def determine_ace_value(totals, hand, participant)
+  if busted?(totals, participant)
+    ace_count = hand.count { |card| card[0].start_with?('A') }
+    until totals[participant] <= BUST_LIMIT || ace_count == 0
       totals[participant] -= 10
+      ace_count -= 1
     end
   end
 end
@@ -56,15 +45,15 @@ end
 def display_cards(hand)
   puts ('+-----+ ' * hand.size).to_s
   hand.each do |card|
-    print card[0...-1] == '10' ? "|10   | " : "|#{card[0]}    | "
+    print card[0] == '10' ? "|10   | " : "|#{card[0][0]}    | "
   end
   puts
   hand.each do |card|
-    print "|  #{card[-1]}  | "
+    print "|  #{card[1]}  | "
   end
   puts
   hand.each do |card|
-    print card[0...-1] == '10' ? "|   10| " : "|    #{card[0]}| "
+    print card[0] == '10' ? "|   10| " : "|    #{card[0][0]}| "
   end
   puts
   puts ('+-----+ ' * hand.size).to_s
@@ -73,11 +62,11 @@ end
 
 # rubocop:disable Metrics/AbcSize
 def display_first_dealer_card(hand)
-  puts "The dealer's card is #{hand[0][0...-1]}."
+  puts "The dealer's card is #{hand[0][0]}."
   puts "+-----+"
-  puts hand[0][0...-1] == '10' ? "|10   |" : "|#{hand[0][0]}    |"
-  puts "|  #{hand[0][-1]}  |"
-  puts hand[0][0...-1] == '10' ? "|   10|" : "|    #{hand[0][0]}|"
+  puts hand[0][0] == '10' ? "|10   |" : "|#{hand[0][0][0]}    |"
+  puts "|  #{hand[0][1]}  |"
+  puts hand[0][0] == '10' ? "|   10|" : "|    #{hand[0][0][0]}|"
   puts "+-----+"
 end
 # rubocop:enable Metrics/AbcSize
@@ -173,7 +162,6 @@ loop do
   point_totals = { player: 0, dealer: 0 }
   loop do
     totals = { player: 0, dealer: 0, tie: 0 }
-    real_totals = { player: 0, dealer: 0 }
     loop do
       system 'clear'
       deck = initialize_deck
@@ -181,18 +169,16 @@ loop do
       player_cards = []
 
       2.times { deal_card(deck, player_cards) }
-      calculate_initial_total(real_totals, totals, player_cards, current_turn)
-      first_player_card = player_cards[0][0...-1]
-      next_player_card = player_cards[1][0...-1]
+      calculate_total(totals, player_cards, current_turn)
 
-      puts "Your cards are #{first_player_card} and #{next_player_card}."
+      puts "Your cards are #{player_cards[0][0]} and #{player_cards[1][0]}."
       display_cards(player_cards)
       puts "Your total is #{totals[:player]}."
 
       current_turn = :dealer
       dealer_cards = []
       2.times { deal_card(deck, dealer_cards) }
-      calculate_initial_total(real_totals, totals, dealer_cards, current_turn)
+      calculate_total(totals, dealer_cards, current_turn)
       display_first_dealer_card(dealer_cards)
 
       loop do
@@ -201,11 +187,9 @@ loop do
         break if answer == 'stay'
 
         current_player_card = deal_card(deck, player_cards)
-        deck = initialize_deck if deck.empty?
-        calculate_player_total(real_totals, totals, current_player_card)
-        determine_ace_value(real_totals, totals, player_cards, current_turn)
+        calculate_total(totals, player_cards, current_turn)
 
-        puts "Your next card is #{current_player_card[0...-1]}."
+        puts "Your next card is #{current_player_card[0]}."
         display_cards(player_cards)
         puts "Your total is #{totals[:player]}."
 
@@ -216,7 +200,7 @@ loop do
       display_final_player_total(totals)
 
       current_turn = :dealer
-      puts "The dealer's next card is #{dealer_cards[1][0...-1]}."
+      puts "The dealer's next card is #{dealer_cards[1][0]}."
       display_cards(dealer_cards)
       puts "The dealer's total is #{totals[:dealer]}."
 
@@ -225,11 +209,9 @@ loop do
         puts "Press enter to continue."
         gets.chomp
         current_dealer_card = deal_card(deck, dealer_cards)
-        deck = initialize_deck if deck.empty?
-        calculate_dealer_total(real_totals, totals, current_dealer_card)
-        determine_ace_value(real_totals, totals, dealer_cards, current_turn)
+        calculate_total(totals, dealer_cards, current_turn)
 
-        puts "The dealer's next card is #{current_dealer_card[0...-1]}."
+        puts "The dealer's next card is #{current_dealer_card[0]}."
         display_cards(dealer_cards)
         puts "The dealer's total is #{totals[:dealer]}."
       end
