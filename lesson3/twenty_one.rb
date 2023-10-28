@@ -163,12 +163,12 @@ loop do
   loop do
     totals = { player: 0, dealer: 0, tie: 0 }
     loop do
-      system 'clear'
+      system 'clear' # these 4 lines can be a method
       deck = initialize_deck
       current_turn = :player
       player_cards = []
 
-      2.times { deal_card(deck, player_cards) }
+      2.times { deal_card(deck, player_cards) } # theese 2 lines can be a method
       calculate_total(totals, player_cards, current_turn)
 
       puts "Your cards are #{player_cards[0][0]} and #{player_cards[1][0]}."
