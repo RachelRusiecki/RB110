@@ -43,3 +43,8 @@ p scramble('rkqodlw', 'world') == true
 p scramble('cedewaraaossoqqyt', 'codewars') == true
 p scramble('katas', 'steak') == false
 p scramble('mcbxefsksmbxdoxwqo', 'fqkoxsbcxxemwmdbs') == true
+
+s1 = "abcdefghijklmnopqrstuvwxyz" * 100_000
+s2 = "zyxcba" * 90_000
+
+p scramble(s1, s2) == true

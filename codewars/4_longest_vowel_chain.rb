@@ -34,7 +34,7 @@ def find_all_substrings(str)
   sub_arrays = []
   chars_arr = str.chars
   chars_arr.each_with_index do |_, start_idx|
-    (start_idx.upto(chars_arr.size - 1)) do |end_idx|
+    start_idx.upto(chars_arr.size - 1) do |end_idx|
       sub_arrays << chars_arr[start_idx..end_idx]
     end
   end

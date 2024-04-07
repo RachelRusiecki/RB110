@@ -26,7 +26,7 @@ Iterate through new array (2 elements)
 =end
 
 def find_uniq(arr)
-  arr.each { |num| return num if arr.count(num) == 1 }
+  arr.uniq.each { |num| return num if arr.count(num) == 1 }
 end
 
 p find_uniq([1,1,1,1,0]) == 0

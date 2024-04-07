@@ -27,9 +27,9 @@ Return size of array
 =end
 
 def solution(full_text, search_text)
-  full_text.delete("^#{search_text}").size / search_text.size
+  full_text.count(search_text) / search_text.size
 end
 
-p solution('abcdeb','b') == 2
+p solution('abcdeb', 'b') == 2
 p solution('abcdeb', 'a') == 1
 p solution('abbc', 'bb') == 1

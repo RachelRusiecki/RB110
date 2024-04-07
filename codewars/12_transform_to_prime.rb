@@ -40,10 +40,9 @@ def prime?(num)
 end
 
 def minimum_number(arr)
-  sum = arr.sum
-  prime = sum
+  prime = arr.sum
   prime += 1 until prime?(prime)
-  prime - sum
+  prime - arr.sum
 end
 
 p minimum_number([3,1,2]) == 1

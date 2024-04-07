@@ -28,13 +28,13 @@ Return -1
 =end
 
 def find_even_index(arr)
-  arr.each_with_index do |num, idx|
+  arr.each_with_index do |_, idx|
     if idx == 0
       return idx if arr[1..].sum == 0
     elsif idx == arr.size - 1
-      return idx if arr[0...-1].sum == 0
+      return idx if arr[0..-2].sum == 0
     else
-      return idx if arr[0...idx].sum == arr[(idx + 1)..-1].sum
+      return idx if arr[0..(idx - 1)].sum == arr[(idx + 1)..-1].sum
     end
   end
   -1
